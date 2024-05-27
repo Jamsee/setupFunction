@@ -1,11 +1,13 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 public static class RunExecutableFunction
@@ -17,15 +19,17 @@ public static class RunExecutableFunction
     {
         log.LogInformation("C# HTTP trigger function processed a request.");
 
-        string executablePath = Path.Combine(Environment.GetEnvironmentVariable("HOME"), "site", "wwwroot", "tools", "setup.exe");
-
-        if (string.IsNullOrEmpty(executablePath) || !File.Exists(executablePath))
-        {
-            return new BadRequestObjectResult("Executable path is not set or the file does not exist.");
-        }
-
         try
         {
+            string username = Environment.UserName;
+            string basePath = $@"C:\Users\{username}\source\repos\setupFunction\tools\";
+            string executablePath = Path.Combine(basePath, "setup.exe");
+
+            if (!File.Exists(executablePath))
+            {
+                return new BadRequestObjectResult("Executable file setup.exe not found.");
+            }
+
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = executablePath,
